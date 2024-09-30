@@ -76,7 +76,7 @@ def create_dataframe(file_path):
     db[NUMERICAL_COL] = db[NUMERICAL_COL].applymap(convert_less_than)
     db[NUMERICAL_COL] = db[NUMERICAL_COL].apply(pd.to_numeric, errors='coerce')
     
-    db.to_csv("table.csv")
+    db.to_csv("table.csv", index=False)
 
     return db
 
