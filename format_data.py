@@ -86,10 +86,10 @@ def get_corr(table:pd.DataFrame, threshold):
     
     for col in table.columns:
         column = table[col]
-        missing_pct = column.isnull().mean() * 100
+        missing_ratio = column.isnull().mean()
         
-        col_info['columns'][col] = {'missing_pct': missing_pct}
-        if missing_pct > 100 - threshold:
+        col_info['columns'][col] = {'missing_ratio': missing_ratio}
+        if missing_ratio > 1 - threshold:
             col_info['below_threshold'].append(col)
         else:
             col_info['above_threshold'].append(col)
@@ -103,6 +103,12 @@ def get_corr(table:pd.DataFrame, threshold):
             col_info['columns'][col]['correlation_with_output'] = np.nan  # No valid data to correlate
 
     return col_info
+
+points = np.array([(0, 0.45), (0.6, 0.05)])
+x_points = points[:, 0]
+y_points = points[:, 1]
+coefficients = np.polyfit(x_points, y_points, 2)
+feature_decision = np.vectorize(lambda completeness: max(0.05, np.polyval(coefficients, completeness)))
 
 if __name__=='__main__':
     file_path="welddb/welddb.data"
