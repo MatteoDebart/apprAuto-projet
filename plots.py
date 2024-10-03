@@ -44,7 +44,7 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
             x_completeness.append(completeness)
             y_correlation.append(correlation)
             column_names.append(col)
-            if feature_decision is not None and feature_decision(completeness) >= correlation:
+            if feature_decision is not None and feature_decision(completeness) <= correlation:
                 features.append(col)
 
         
