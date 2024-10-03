@@ -74,6 +74,7 @@ def create_dataframe(file_path):
     Db = pd.concat([Db, encoded_weld_df], axis=1)
 
     Db = Db.drop('Weld ID', axis=1)
+    Db = Db.drop('Type of weld', axis=1)
     Db.to_csv("table.csv")
     return Db
 
@@ -97,7 +98,7 @@ def get_corr(table:pd.DataFrame, threshold):
         
         valid_rows = table[[col, 'output']].dropna()
         
-        if not valid_rows.empty and col not in CATEGORICAL_COL:
+        if not valid_rows.empty:
             correlation = valid_rows.corr()
             col_info['columns'][col]['correlation_with_output'] = correlation.values[0,1]
         else:
