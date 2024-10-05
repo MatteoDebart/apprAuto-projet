@@ -108,7 +108,7 @@ def get_corr(table:pd.DataFrame, threshold):
 
 
 def feature_decision(completeness):
-    points = np.array([(0, 0.45), (0.6, 0.05)])
+    points = np.array([(0, 0.45), (0.4, 0.22778), (0.6, 0.05)])
     x_points = points[:, 0]
     y_points = points[:, 1]
     coefficients = np.polyfit(x_points, y_points, 2)

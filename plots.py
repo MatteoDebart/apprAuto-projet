@@ -55,7 +55,7 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
     
     # Label each point with the column name
     for i, txt in enumerate(column_names):
-        plt.annotate(txt, (x_completeness[i], y_correlation[i]), fontsize=9, ha='right')
+        plt.annotate(txt, (x_completeness[i], y_correlation[i]), fontsize=12, ha='right')
 
     if feature_decision is not None:
         comp = np.linspace(min(x_completeness), max(x_completeness), 100)
@@ -63,14 +63,15 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
         plt.plot(comp, corr, '-r')
 
     # Labels and title (in French)
-    plt.xlabel("Complétude de la colonne (%)", fontsize=12)
+    plt.xlabel("Complétude de la colonne", fontsize=12)
     plt.ylabel("Corrélation avec 'output' en valeur absolue", fontsize=12)
-    plt.title("Complétude vs Corrélation avec 'output'= Yield strength / MPa", fontsize=14)
+    plt.title("Complétude vs Corrélation avec Yield strength / MPa", fontsize=14)
 
     # Show grid
     plt.grid(True)
     
     # Display the plot
+    plt.tight_layout()
     plt.show()
 
     return features
