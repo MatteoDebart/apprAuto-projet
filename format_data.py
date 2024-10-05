@@ -106,11 +106,14 @@ def get_corr(table:pd.DataFrame, threshold):
 
     return col_info
 
-points = np.array([(0, 0.45), (0.6, 0.05)])
-x_points = points[:, 0]
-y_points = points[:, 1]
-coefficients = np.polyfit(x_points, y_points, 2)
-feature_decision = np.vectorize(lambda completeness: max(0.05, np.polyval(coefficients, completeness)))
+
+def feature_decision(completeness):
+    points = np.array([(0, 0.45), (0.6, 0.05)])
+    x_points = points[:, 0]
+    y_points = points[:, 1]
+    coefficients = np.polyfit(x_points, y_points, 2)
+    f = np.vectorize(lambda c: max(0.05, np.polyval(coefficients, c)))
+    return f(completeness)
 
 if __name__=='__main__':
 
