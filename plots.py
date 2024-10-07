@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-from format_data import feature_decision
+from preprocess import feature_decision
+from sklearn.cross_decomposition import PLSRegression
 
 def column_info(col_title, table):
     col = table[col_title]
@@ -27,13 +28,9 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
     y_correlation = []
     column_names = []
 
-    if feature_decision is None:
-        features = col_info
-    else:
-        features=[]
 
     # Loop through the columns in col_info
-    for col, info in col_info['columns'].items():
+    for col, info in col_info.items():
         if 'correlation_with_output' in info:  # Only consider columns with calculated correlation
             if col=='output':
                 continue
@@ -44,8 +41,6 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
             x_completeness.append(completeness)
             y_correlation.append(correlation)
             column_names.append(col)
-            if feature_decision is not None and feature_decision(completeness) <= correlation:
-                features.append(col)
 
         
     # Plotting
@@ -64,8 +59,8 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
 
     # Labels and title (in French)
     plt.xlabel("Complétude de la colonne", fontsize=12)
-    plt.ylabel("Corrélation avec 'output' en valeur absolue", fontsize=12)
-    plt.title("Complétude vs Corrélation avec Yield strength / MPa", fontsize=14)
+    plt.ylabel("Corrélation avec l'output en valeur absolue", fontsize=12)
+    plt.title("Complétude vs Corrélation", fontsize=14)
 
     # Show grid
     plt.grid(True)
@@ -73,8 +68,6 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
     # Display the plot
     plt.tight_layout()
     plt.show()
-
-    return features
 
 def plot_PLS(pls:PLSRegression, X, y):
     Y_pred = pls.predict(X)
