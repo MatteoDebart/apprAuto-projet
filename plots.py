@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-from format_data import feature_decision
+from preprocess import feature_decision
+from sklearn.cross_decomposition import PLSRegression
 
 def column_info(col_title, table):
     col = table[col_title]
@@ -27,13 +28,9 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
     y_correlation = []
     column_names = []
 
-    if feature_decision is None:
-        features = col_info
-    else:
-        features=[]
 
     # Loop through the columns in col_info
-    for col, info in col_info['columns'].items():
+    for col, info in col_info.items():
         if 'correlation_with_output' in info:  # Only consider columns with calculated correlation
             if col=='output':
                 continue
@@ -44,8 +41,6 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
             x_completeness.append(completeness)
             y_correlation.append(correlation)
             column_names.append(col)
-            if feature_decision is not None and feature_decision(completeness) <= correlation:
-                features.append(col)
 
         
     # Plotting
@@ -55,7 +50,7 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
     
     # Label each point with the column name
     for i, txt in enumerate(column_names):
-        plt.annotate(txt, (x_completeness[i], y_correlation[i]), fontsize=9, ha='right')
+        plt.annotate(txt, (x_completeness[i], y_correlation[i]), fontsize=12, ha='right')
 
     if feature_decision is not None:
         comp = np.linspace(min(x_completeness), max(x_completeness), 100)
@@ -63,14 +58,39 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
         plt.plot(comp, corr, '-r')
 
     # Labels and title (in French)
-    plt.xlabel("Complétude de la colonne (%)", fontsize=12)
-    plt.ylabel("Corrélation avec 'output' en valeur absolue", fontsize=12)
-    plt.title("Complétude vs Corrélation avec 'output'= Yield strength / MPa", fontsize=14)
+    plt.xlabel("Complétude de la colonne", fontsize=12)
+    plt.ylabel("Corrélation avec l'output en valeur absolue", fontsize=12)
+    plt.title("Complétude vs Corrélation", fontsize=14)
 
     # Show grid
     plt.grid(True)
     
     # Display the plot
+    plt.tight_layout()
     plt.show()
 
-    return features
+def plot_PLS(pls:PLSRegression, X, y):
+    Y_pred = pls.predict(X)
+    X_reduced = pls.transform(X)
+    r2 = pls.score(X, y)
+    # Create subplots
+    fig, ax = plt.subplots(1, 2, figsize=(12, 5))  # 1 row, 2 columns
+
+    # Plot the reduced dimensions on the left
+    scatter1 = ax[0].scatter(X_reduced[:, 0], X_reduced[:, 1], c=y, cmap='viridis', edgecolor='k')
+    ax[0].set_xlabel('Component 1')
+    ax[0].set_ylabel('Component 2')
+    ax[0].set_title('PLS Reduced Dimensions of X')
+    fig.colorbar(scatter1, ax=ax[0], label='Target (y)')
+
+    # Plot actual vs predicted values on the right
+    scatter2 = ax[1].scatter(y, Y_pred, color='blue', label='Predicted vs Actual')
+    ax[1].plot([y.min(), y.max()], [y.min(), y.max()], 'r--', label='Ideal Fit')  # Diagonal line for perfect predictions
+    ax[1].set_xlabel('Actual Values')
+    ax[1].set_ylabel('Predicted Values')
+    ax[1].set_title(f'PLS Regression: Actual vs Predicted (R²: {r2:.2f})')
+    ax[1].legend()
+
+    # Adjust layout
+    plt.tight_layout()
+    plt.show()

@@ -57,7 +57,7 @@ def convert_less_than(value):
             return value
     return value
 
-def create_dataframe(file_path):
+def create_dataframe(file_path:str):
     Db = pd.read_csv(file_path, delimiter = "\s+", names=COLUMNS, na_values='N')
     Db[NUMERICAL_COL] = Db[NUMERICAL_COL].applymap(convert_less_than)
     Db[NUMERICAL_COL] = Db[NUMERICAL_COL].apply(pd.to_numeric, errors='coerce')
@@ -77,40 +77,6 @@ def create_dataframe(file_path):
     Db = Db.drop('Type of weld', axis=1)
     Db.to_csv("table.csv")
     return Db
-
-def get_corr(table:pd.DataFrame, threshold):
-    # Initialize the result dictionary
-    col_info = {
-        'below_threshold': [],  # Columns with too many missing values
-        'above_threshold': [],  # Columns passing the threshold
-        'columns': {}           # Store correlation and missing percentage
-    }
-    
-    for col in table.columns:
-        column = table[col]
-        missing_ratio = column.isnull().mean()
-        
-        col_info['columns'][col] = {'missing_ratio': missing_ratio}
-        if missing_ratio > 1 - threshold:
-            col_info['below_threshold'].append(col)
-        else:
-            col_info['above_threshold'].append(col)
-        
-        valid_rows = table[[col, 'output']].dropna()
-        
-        if not valid_rows.empty:
-            correlation = valid_rows.corr()
-            col_info['columns'][col]['correlation_with_output'] = correlation.values[0,1]
-        else:
-            col_info['columns'][col]['correlation_with_output'] = np.nan  # No valid data to correlate
-
-    return col_info
-
-points = np.array([(0, 0.45), (0.6, 0.05)])
-x_points = points[:, 0]
-y_points = points[:, 1]
-coefficients = np.polyfit(x_points, y_points, 2)
-feature_decision = np.vectorize(lambda completeness: max(0.05, np.polyval(coefficients, completeness)))
 
 if __name__=='__main__':
 
