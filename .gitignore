@@ -9,3 +9,6 @@ venv/
 
 # personal scipts
 perso.ipynb
+
+#models
+models/
