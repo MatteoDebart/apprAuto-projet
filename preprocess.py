@@ -6,6 +6,9 @@ from format_data import MECHANICAL_PROPERTIES, CATEGORICAL_COL, NUMERICAL_COL
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 
+from utils import get_numerical_features
+from format_data import create_dataframe
+
 
 class OutputColumn(Enum):
     elongation = "Elongation / %"
@@ -62,12 +65,12 @@ def feature_selection(col_info, feature_decision=feature_decision):
     return features
 
 
-def handle_outliers(Db: pd.DataFrame, num_features: list[str], iqr_features: list[str] = ["Manganese concentration / (weight%)", "Carbon concentration / (weight%)", "Niobium concentration / parts per million by weight", "Molybdenum concentration / (weight%)"]):
+def handle_outliers(Db: pd.DataFrame, iqr_features: list[str] = ["Manganese concentration / (weight%)", "Carbon concentration / (weight%)", "Niobium concentration / parts per million by weight", "Molybdenum concentration / (weight%)"]):
     '''Implement IQR on the selected featurs to remove outliers
     Db: the dataset
-    num_features: the list of numerical features
     iqr_features: the list of features on which to apply IQR 
     '''
+    num_features = get_numerical_features(Db)
     for col in num_features:
         if col in iqr_features:
             non_nan_data = Db[col].dropna()
@@ -83,6 +86,7 @@ def handle_outliers(Db: pd.DataFrame, num_features: list[str], iqr_features: lis
             for _, row in Db.iterrows():
                 if not np.isnan(row[col]) and (lower_bound > row[col] or row[col] > upper_bound):
                     row[col] = np.nan
+    return Db
 
 
 def imputation(Db: pd.DataFrame):
@@ -112,11 +116,17 @@ def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, PLS=False,
     col_info = get_corr(reduced_Db[features])
     features = feature_selection(col_info)
 
+    Db = handle_outliers(Db[features])
     # We do the imputation with as many rows as possible
-    imputed_Db = imputation(Db[features])
+    imputed_Db = imputation(Db)
     Db = imputed_Db.dropna(subset=['output'])
 
     # Must be scaled before PCA
     # Will ask the lecturer tomorrow about the PLS criteria r² or adjusted
 
     return Db
+
+
+if __name__ == "__main__":
+    db = create_dataframe()
+    processed_db = preprocess_supervised(db, OutputColumn.yield_strength)
