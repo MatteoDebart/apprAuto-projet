@@ -106,7 +106,8 @@ def plot_PCA(Df:pd.DataFrame, pca_features:list, category:str = None):
             - pca_features:     The names of the columns considered as input of the PCA
             - category:         The name of the column of the categorial feture used for colors in the final plot
     
-    Returns: None
+    Returns: pca:                   The instance of PCA trained on the features
+             nb_relevant_features   The number of relevant PCA features
     '''
 
     df_pca = (Df[pca_features] - Df[pca_features].mean())/Df[pca_features].std()
@@ -152,3 +153,5 @@ def plot_PCA(Df:pd.DataFrame, pca_features:list, category:str = None):
             counter += 1
     fig.suptitle("PCA Analysis")
     plt.show()
+
+    return pca, nb_relevant_features
