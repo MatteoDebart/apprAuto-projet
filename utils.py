@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from format_data import CATEGORICAL_COL
+
 
 def convert_less_than(value):
     if isinstance(value, str) and value.startswith('<'):
@@ -21,6 +23,12 @@ def plot_distribution(column):
         sns.histplot(column, kde=True, bins=10)
     else:
         sns.countplot(x=column)
-    
+
     plt.ylabel('Frequency')
     plt.show()
+
+
+def get_numerical_features(Db):
+    numerical_features = list(set(Db.columns) -
+                              set(CATEGORICAL_COL) - set(["output"]))
+    return numerical_features
