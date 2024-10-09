@@ -5,8 +5,9 @@ from enum import Enum
 from format_data import MECHANICAL_PROPERTIES, CATEGORICAL_COL, NUMERICAL_COL
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
+from sklearn.preprocessing import StandardScaler
 
-from utils import get_numerical_features
+from utils import get_numerical_features, get_categirical_features
 from format_data import create_dataframe
 
 
@@ -96,33 +97,44 @@ def imputation(Db: pd.DataFrame):
     iterative_imputer = IterativeImputer(
         random_state=42, sample_posterior=True)
     Db[num_columns] = iterative_imputer.fit_transform(Db[num_columns])
-
+    
+    # TODO : change the handling of categorical imputation
     cat_columns = list(set(Db.columns) - set(NUMERICAL_COL) - set(["output"]))
     Db[cat_columns] = iterative_imputer.fit_transform(Db[cat_columns])
     Db[cat_columns] = Db[cat_columns].apply(lambda x: x >= 0.5)
     return Db
 
 
-def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, PLS=False, n_components=5):
+def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, all_welds=False):
     Db = Db.rename(columns={output_col.value: 'output'})
-    features = list(set(Db.columns)-set(MECHANICAL_PROPERTIES))
 
-    # For the supervised approach we only keep the rows with an output
+    # Outliers and scaling
+    Db=handle_outliers(Db)
+    scaler = StandardScaler()
+    Db[get_numerical_features(Db)] = scaler.fit_transform(Db[get_numerical_features(Db)])
+
+    # we look at the correlation with the output and the columns with the least NaN values where the output is present
     reduced_Db = Db.dropna(subset=['output'])
     print(
         f"We retain only the rows with output values {output_col.value}, that is {100*len(reduced_Db)/len(Db):2f}% of the dataset")
 
     # We keep the rows this high correlation and completeness
+    features = list(set(Db.columns)-set(MECHANICAL_PROPERTIES))
     col_info = get_corr(reduced_Db[features])
     features = feature_selection(col_info)
+    if all_welds:
+        weld_columns = [col for col in Db.columns if col.startswith("Type of weld_")]
+        for col in weld_columns:
+            if col not in features:
+                features.append(col)
+    
 
-    Db = handle_outliers(Db[features])
-    # We do the imputation with as many rows as possible
-    imputed_Db = imputation(Db)
+    # We do the imputation with as many rows as possible 
+    imputed_Db = imputation(Db[features])
+    # But for the supervised approach we only keep the rows with an output
     Db = imputed_Db.dropna(subset=['output'])
 
-    # Must be scaled before PCA
-    # Will ask the lecturer tomorrow about the PLS criteria r² or adjusted
+    Db[get_numerical_features(Db)] = scaler.fit_transform(Db[get_numerical_features(Db)])
 
     return Db
 
