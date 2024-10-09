@@ -66,7 +66,7 @@ def create_dataframe(file_path:str):
     Db["AC or DC"] = Db["AC or DC"].apply(AC_DC)
     Db["Electrode positive or negative"] = Db["Electrode positive or negative"].apply(electrode)
     
-    encoder = OneHotEncoder(sparse=False)
+    encoder = OneHotEncoder(sparse_output=False)
     encoded_weld_type = encoder.fit_transform(Db[["Type of weld"]])
     encoded_weld_df = pd.DataFrame(encoded_weld_type, columns=encoder.get_feature_names_out(['Type of weld']))
     
