@@ -2,18 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from format_data import CATEGORICAL_COL
-
-
-def convert_less_than(value):
-    if isinstance(value, str) and value.startswith('<'):
-        try:
-            number = float(value[1:])
-            return np.random.uniform(0, number)
-        except ValueError:
-            return value
-    return value
-
+from format_data import CATEGORICAL_COL, NUMERICAL_COL
 
 def plot_distribution(column):
 
@@ -29,6 +18,12 @@ def plot_distribution(column):
 
 
 def get_numerical_features(Db):
-    numerical_features = list(set(Db.columns) -
+    weld_columns = [col for col in Db.columns if col.startswith("Type of weld_")]
+    numerical_features = list(set(Db.columns) - set(weld_columns) -
                               set(CATEGORICAL_COL) - set(["output"]))
+    return numerical_features
+
+def get_categirical_features(Db):
+    numerical_features = list(set(Db.columns) -
+                              set(NUMERICAL_COL) - set(["output"]))
     return numerical_features
