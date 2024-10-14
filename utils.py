@@ -17,13 +17,24 @@ def plot_distribution(column):
     plt.show()
 
 
-def get_numerical_features(Db):
+def get_numerical_features(Db:pd.DataFrame):
     weld_columns = [col for col in Db.columns if col.startswith("Type of weld_")]
     numerical_features = list(set(Db.columns) - set(weld_columns) -
                               set(CATEGORICAL_COL) - set(["output"]))
     return numerical_features
 
-def get_categirical_features(Db):
+def get_categorical_features(Db:pd.DataFrame):
     numerical_features = list(set(Db.columns) -
                               set(NUMERICAL_COL) - set(["output"]))
     return numerical_features
+
+def weld_type(Db:pd.DataFrame):
+    weld_columns = [col for col in Db.columns if col.startswith("Type of weld_")]
+    def weld(row):
+        for weld, value in row.items():
+            if value:
+                return weld.replace("Type of weld_", "")  # Remove the prefix
+        return 'Other'
+    
+    return Db[weld_columns].apply(weld, axis=1)
+

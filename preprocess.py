@@ -7,7 +7,7 @@ from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import StandardScaler
 
-from utils import get_numerical_features, get_categirical_features
+from utils import get_numerical_features, get_categorical_features
 from format_data import create_dataframe
 
 
@@ -134,7 +134,7 @@ def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, all_welds=
     # But for the supervised approach we only keep the rows with an output
     Db = imputed_Db.dropna(subset=['output'])
 
-    Db[get_numerical_features(Db)] = scaler.fit_transform(Db[get_numerical_features(Db)])
+    Db[get_numerical_features(Db)+['output']] = scaler.fit_transform(Db[get_numerical_features(Db)+['output']])
 
     return Db
 

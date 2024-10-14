@@ -94,3 +94,33 @@ def plot_PLS(pls:PLSRegression, X, y):
     # Adjust layout
     plt.tight_layout()
     plt.show()
+
+
+def plot_y_pred(y, y_pred, weld_types=None):
+    plt.figure(figsize=(8, 6))
+    
+    if weld_types is not None:
+        # If weld is provided, create a scatter plot with different colors for each weld type
+        welds = set(weld_types)
+        for w in welds:
+            mask = (weld_types == w)
+            plt.scatter(y[mask], y_pred[mask], label=f"Weld: {w}", alpha=0.7)
+    else:
+        # If weld is not provided, plot a regular scatter plot
+        plt.scatter(y, y_pred, alpha=0.7, label='Predictions')
+
+    # Plot the perfect y = y_pred line
+    min_val = min(np.min(y), np.min(y_pred))
+    max_val = max(np.max(y), np.max(y_pred))
+    plt.plot([min_val, max_val], [min_val, max_val], color='red', linestyle='--', label='Perfect Prediction (y = y_pred)')
+    
+    # Add labels and legend
+    plt.xlabel('True Values (y)')
+    plt.ylabel('Predicted Values (y_pred)')
+    plt.title('True vs Predicted Values')
+    
+    if weld_types is not None:
+        plt.legend()
+    
+    plt.grid(True)
+    plt.show()
