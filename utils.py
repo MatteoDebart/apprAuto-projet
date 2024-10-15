@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from format_data import CATEGORICAL_COL
+import miceforest as mf
 
 
 def convert_less_than(value):
@@ -32,3 +33,17 @@ def get_numerical_features(Db):
     numerical_features = list(set(Db.columns) -
                               set(CATEGORICAL_COL) - set(["output"]))
     return numerical_features
+
+
+def impute_categorical(Db, categorical_columns_to_impute):
+    
+    kds = mf.ImputationKernel(
+                        Db,
+                        variable_schema=categorical_columns_to_impute,
+                        random_state=1991
+                        )
+    kds.mice(2)
+    imputed_Db = kds.complete_data()
+
+    return imputed_Db[categorical_columns_to_impute]
+
