@@ -111,7 +111,8 @@ def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, all_welds=
     # Outliers and scaling
     Db=handle_outliers(Db)
     scaler = StandardScaler()
-    Db[get_numerical_features(Db)] = scaler.fit_transform(Db[get_numerical_features(Db)])
+    scaled_feature = get_numerical_features(Db)+['output']
+    Db[scaled_feature] = scaler.fit_transform(Db[scaled_feature])
 
     # we look at the correlation with the output and the columns with the least NaN values where the output is present
     reduced_Db = Db.dropna(subset=['output'])
@@ -130,11 +131,12 @@ def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, all_welds=
     
 
     # We do the imputation with as many rows as possible 
-    imputed_Db = imputation(Db[features])
-    # But for the supervised approach we only keep the rows with an output
-    Db = imputed_Db.dropna(subset=['output'])
+    imputed_Db = imputation(Db)
+    imputed_Db[scaled_feature] = scaler.inverse_transform(imputed_Db[scaled_feature])
 
-    Db[get_numerical_features(Db)+['output']] = scaler.fit_transform(Db[get_numerical_features(Db)+['output']])
+    # But for the supervised approach we only keep the rows with an output
+    Db = imputed_Db.dropna(subset=['output'])[features]
+    
 
     return Db
 
