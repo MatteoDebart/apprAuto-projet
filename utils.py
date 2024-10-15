@@ -28,13 +28,15 @@ def get_categorical_features(Db:pd.DataFrame):
                               set(NUMERICAL_COL) - set(["output"]))
     return numerical_features
 
-def weld_type(Db:pd.DataFrame):
-    weld_columns = [col for col in Db.columns if col.startswith("Type of weld_")]
-    def weld(row):
-        for weld, value in row.items():
-            if value:
-                return weld.replace("Type of weld_", "")  # Remove the prefix
-        return 'Other'
+def impute_categorical(Db, categorical_columns_to_impute):
     
-    return Db[weld_columns].apply(weld, axis=1)
+    kds = mf.ImputationKernel(
+                        Db,
+                        variable_schema=categorical_columns_to_impute,
+                        random_state=1991
+                        )
+    kds.mice(2)
+    imputed_Db = kds.complete_data()
+
+    return imputed_Db[categorical_columns_to_impute]
 

@@ -7,7 +7,7 @@ from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import StandardScaler
 
-from utils import get_numerical_features, get_categorical_features
+from utils import get_numerical_features, impute_categorical
 from format_data import create_dataframe
 
 
@@ -97,10 +97,9 @@ def imputation(Db: pd.DataFrame):
     iterative_imputer = IterativeImputer(
         random_state=42, sample_posterior=True)
     Db[num_columns] = iterative_imputer.fit_transform(Db[num_columns])
-    
-    # TODO : change the handling of categorical imputation
+    # categorical columns
     cat_columns = list(set(Db.columns) - set(NUMERICAL_COL) - set(["output"]))
-    Db[cat_columns] = iterative_imputer.fit_transform(Db[cat_columns])
+    Db[cat_columns] = impute_categorical(Db, cat_columns)
     Db[cat_columns] = Db[cat_columns].apply(lambda x: x >= 0.5)
     return Db
 
