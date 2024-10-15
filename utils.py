@@ -26,9 +26,9 @@ def get_numerical_features(Db:pd.DataFrame):
     return numerical_features
 
 def get_categorical_features(Db:pd.DataFrame):
-    numerical_features = list(set(Db.columns) -
+    categorical_features = list(set(Db.columns) -
                               set(NUMERICAL_COL) - set(["output"]))
-    return numerical_features
+    return categorical_features
 
 def impute_categorical(Db, categorical_columns_to_impute):
     
