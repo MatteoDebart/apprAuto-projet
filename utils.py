@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from format_data import CATEGORICAL_COL, NUMERICAL_COL
+import miceforest as mf
+
 
 def plot_distribution(column):
 
