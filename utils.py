@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from format_data import CATEGORICAL_COL, NUMERICAL_COL
+from sklearn.linear_model import SGDRegressor
 
 def plot_distribution(column):
 
