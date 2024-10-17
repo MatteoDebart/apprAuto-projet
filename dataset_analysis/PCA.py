@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
+from sklearn.metrics.pairwise import cosine_similarity
 
 def plot_PCA(Df:pd.DataFrame, pca_features:list, category:str = None):
     '''
@@ -60,4 +61,19 @@ def plot_PCA(Df:pd.DataFrame, pca_features:list, category:str = None):
     fig.suptitle("PCA Analysis")
     plt.show()
 
-    return pca, nb_relevant_features
+    eye_matrix = np.eye(len(pca_features))
+    contribution_vectors = pca.transform(eye_matrix)[:,:nb_relevant_features]
+
+    norms = {pca_features[vector]: np.linalg.norm(contribution_vectors[vector]) for vector in range(len(pca_features))}
+
+    features_importance = sorted(norms.keys(), key=lambda item: norms[item], reverse=True)
+
+    sim_matrix = cosine_similarity(contribution_vectors) - np.eye(len(pca_features))
+
+    sim_pairs = []
+    for i in range(len(pca_features)):
+        for j in range(i):
+            if sim_matrix[i,j] >= 0.8:
+                sim_pairs.append([pca_features[i], pca_features[j]])
+
+    return pca, nb_relevant_features, features_importance, sim_pairs
