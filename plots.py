@@ -5,6 +5,8 @@ import numpy as np
 from preprocess import feature_decision
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
+from sklearn.metrics.pairwise import cosine_similarity
+
 
 
 def column_info(col_title, table):
@@ -108,6 +110,8 @@ def plot_PCA(Df:pd.DataFrame, pca_features:list, category:str = None):
     
     Returns: pca:                   The instance of PCA trained on the features
              nb_relevant_features   The number of relevant PCA features
+             features_importance    The list of features in decreasing order of importance in the contribution to variance
+             sim_pairs              The list of pairs of features which have a similar influence on variability (cosine similarity >=0.8)
     '''
 
     df_pca = (Df[pca_features] - Df[pca_features].mean())/Df[pca_features].std()
@@ -147,11 +151,26 @@ def plot_PCA(Df:pd.DataFrame, pca_features:list, category:str = None):
     counter = 0
     for featurey in range(nb_relevant_features):
         for featurex in range(featurey+1,nb_relevant_features):
-            axs[counter//n_cols,counter%n_cols].scatter(df_principal_components[:,featurex], df_principal_components[:,featurey], c = Df[category])
+            axs[counter//n_cols,counter%n_cols].scatter(df_principal_components[:,featurex], df_principal_components[:,featurey], c = Df[category] if category else None)
             axs[counter//n_cols,counter%n_cols].set_xlabel(f"Feature {featurex}")
             axs[counter//n_cols,counter%n_cols].set_ylabel(f"Feature {featurey}")
             counter += 1
     fig.suptitle("PCA Analysis")
     plt.show()
 
-    return pca, nb_relevant_features
+    eye_matrix = np.eye(len(pca_features))
+    contribution_vectors = pca.transform(eye_matrix)[:,:nb_relevant_features]
+
+    norms = {pca_features[vector]: np.linalg.norm(contribution_vectors[vector]) for vector in range(len(pca_features))}
+
+    features_importance = sorted(norms.keys(), key=lambda item: norms[item], reverse=True)
+
+    sim_matrix = cosine_similarity(contribution_vectors) - np.eye(len(pca_features))
+
+    sim_pairs = []
+    for i in range(len(pca_features)):
+        for j in range(i):
+            if sim_matrix[i,j] >= 0.8:
+                sim_pairs.append([pca_features[i], pca_features[j]])
+
+    return pca, nb_relevant_features, features_importance, sim_pairs
