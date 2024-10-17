@@ -90,3 +90,4 @@ if __name__ == '__main__':
 
     file_path = "welddb/welddb.data"
     create_dataframe(file_path)
+    
