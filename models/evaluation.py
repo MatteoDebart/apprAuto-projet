@@ -50,3 +50,26 @@ def cross_validation(model, X, y, k=5):
     return results
 
 
+
+def evaluation(model, X_test, y_test):
+    y_pred = model.predict(X_test)
+    
+    # Calculate MSE and R² for the current fold
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    # Calculate bias
+    bias = np.mean(y_pred - y_test)
+    
+    variance = np.var(y_pred)
+
+    results = {
+        'MSE': mse,
+        'R²': r2,
+        'Bias': bias,
+        'Variance': variance
+    }
+    
+    return results
+
+
