@@ -164,7 +164,6 @@ def seek_best_degree(n, X_train, y_train):
 
 if __name__ == "__main__":
     data_file_path="welddb/welddb.data"
-    model_file_path = 'models/xgboost_model.pkl'
     target = OutputColumn.yield_strength
 
     print("Loading the dataset")
