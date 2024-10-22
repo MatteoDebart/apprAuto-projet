@@ -5,6 +5,7 @@ import seaborn as sns
 from format_data import CATEGORICAL_COL, NUMERICAL_COL
 
 
+
 def plot_distribution(column):
 
     plt.figure(figsize=(6, 4))
@@ -51,3 +52,16 @@ def get_categorical_features(Db:pd.DataFrame):
                               set(NUMERICAL_COL) - set(["output"]))
     return categorical_features
 
+def get_weld(Db:pd.DataFrame):
+    # Identify columns that start with "Type of weld_"
+    weld_columns = [col for col in Db.columns if col.startswith("Type of weld_")]
+    
+    def extract_weld_type(row):
+        # Iterate through the weld columns to find the type with value 1
+        for weld in weld_columns:
+            if row[weld] == 1:
+                return weld.replace("Type of weld_", "")  # Remove the prefix
+        return 'Other'  # Return 'Other' if no type is found
+
+    # Apply the extract_weld_type function to each row in the DataFrame
+    return Db.apply(extract_weld_type, axis=1)
