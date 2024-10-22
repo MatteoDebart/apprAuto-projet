@@ -6,8 +6,9 @@ from format_data import MECHANICAL_PROPERTIES, CATEGORICAL_COL, NUMERICAL_COL
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import StandardScaler
+import miceforest as mf
 
-from utils import get_numerical_features, impute_categorical, get_categorical_features
+from utils import get_numerical_features, get_categorical_features, get_corr
 from format_data import create_dataframe
 
 
@@ -15,29 +16,6 @@ class OutputColumn(Enum):
     elongation = "Elongation / %"
     yield_strength = "Yield strength / MPa"
     ch_imp_toughness = "Charpy impact toughness / J"
-
-
-def get_corr(table: pd.DataFrame):
-    # Initialize the result dictionary
-    col_info = {
-    }
-
-    for col in table.columns:
-        column = table[col]
-        missing_ratio = column.isnull().mean()
-
-        col_info[col] = {'missing_ratio': missing_ratio}
-
-        valid_rows = table[[col, 'output']].dropna()
-
-        if not valid_rows.empty:
-            correlation = valid_rows.corr()
-            col_info[col]['correlation_with_output'] = correlation.values[0, 1]
-        else:
-            # No valid data to correlate
-            col_info[col]['correlation_with_output'] = np.nan
-
-    return col_info
 
 
 def feature_decision(completeness):
@@ -90,17 +68,22 @@ def handle_outliers(Db: pd.DataFrame, iqr_features: list[str] = ["Manganese conc
     return Db
 
 
-def imputation(Db: pd.DataFrame):
+def imputation(Db: pd.DataFrame, numerical=True, categorical=True):
     # numerical columns
-    num_columns = list(set(Db.columns) -
-                       set(CATEGORICAL_COL) - set(["output"]))
-    iterative_imputer = IterativeImputer(
-        random_state=42, sample_posterior=True)
-    Db[num_columns] = iterative_imputer.fit_transform(Db[num_columns])
+    if numerical:
+        num_columns = get_numerical_features(Db)
+        iterative_imputer = IterativeImputer(
+            random_state=42, sample_posterior=True)
+        Db[num_columns] = iterative_imputer.fit_transform(Db[num_columns])
     # categorical columns
-    cat_columns = get_categorical_features(Db)
-    Db[cat_columns] = impute_categorical(Db, cat_columns)
-    Db[cat_columns] = Db[cat_columns].apply(lambda x: x >= 0.5)
+    if categorical:
+        cat_columns = get_categorical_features(Db)
+        kds = mf.ImputationKernel(Db,
+                                  variable_schema=cat_columns,
+                                  random_state=1991)
+        kds.mice(2)
+        imputed_Db = kds.complete_data()
+        Db[cat_columns] = imputed_Db[cat_columns].apply(lambda x: x >= 0.5)
     return Db
 
 
