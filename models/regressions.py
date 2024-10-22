@@ -6,8 +6,14 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 import itertools
 
+import sys, os
+
+if __name__ == "__main__":
+    sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),".."))
+
 from format_data import create_dataframe
 from preprocess import preprocess_supervised, OutputColumn
+from evaluation import cross_validation
 
 def split_target_from_dataset(Db, target='output'):  # Remove target col
     y = Db[target]
@@ -97,8 +103,9 @@ def evaluate_regression(pipeline, param_grid, X_train, X_test, y_train, y_test, 
     plt.grid()
     plt.show()
 
-def evaluate_regression_no_plots(pipeline, param_grid, X_train, y_train):
+    print(cross_validation(pipeline, np.array(X_train_temp), np.array(y_train)))
 
+def evaluate_regression_no_plots(pipeline, param_grid, X_train, y_train):
     best_parameters_ids = [0]
     best_scoring_list = []
     features_list = []
@@ -135,13 +142,13 @@ def evaluate_regression_no_plots(pipeline, param_grid, X_train, y_train):
     print("Best features: ", optimal_features)
     return best_scoring_list[best_score_id]
 
-def seek_best_degree(n):
+def seek_best_degree(n, X_train, y_train):
     list_scores = []
     min_score = np.inf
 
     for i in range(1,n):
         pipeline_linreg = Pipeline([('preprocesser', PolynomialFeatures(i)),('model', SGDRegressor())])
-        score = evaluate_regression_no_plots(pipeline_linreg, {})
+        score = evaluate_regression_no_plots(pipeline_linreg, {}, X_train, y_train)
         list_scores.append(score)
         if score <= min_score:
             min_score = score
@@ -154,9 +161,6 @@ def seek_best_degree(n):
     plt.show()
 
     return best_degree
-
-    
-
 
 if __name__ == "__main__":
     data_file_path="welddb/welddb.data"
@@ -173,10 +177,10 @@ if __name__ == "__main__":
 
     print("Train/Test split")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=21)
-
-    degree = seek_best_degree(6)
-
+    
+    degree = seek_best_degree(5, X_train, y_train)
+    
     print("Creating Pipelines")
     pipeline_linreg = Pipeline([('preprocesser', PolynomialFeatures(degree)),('model', SGDRegressor())])
 
-    evaluate_regression(pipeline_linreg, {}, X_train, X_test, y_train, y_test)
+    evaluate_regression(pipeline_linreg, {}, X_train, X_test, y_train, y_test, Db.keys())
