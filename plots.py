@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-from preprocess import feature_decision
+from preprocess import feature_decision, OutputColumn
+from utils import get_corr
+from format_data import MECHANICAL_PROPERTIES
 
 def column_info(col_title, table):
     col = table[col_title]
@@ -21,7 +23,11 @@ def column_info(col_title, table):
     plt.show()
 
 
-def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
+def plot_completeness_vs_corr(Db, output_column:OutputColumn, feature_decision=feature_decision):
+    Db = Db.rename(columns={output_column.value: 'output'})
+    features = list(set(Db.columns)-set(MECHANICAL_PROPERTIES))
+    col_info = get_corr(Db[features])
+
     # Initialize lists to store x (completeness) and y (correlation) values
     x_completeness = []
     y_correlation = []
@@ -45,7 +51,7 @@ def plot_completeness_vs_corr(col_info, feature_decision=feature_decision):
     # Plotting
     plt.figure(figsize=(20, 20))
     plt.scatter(x_completeness, y_correlation, color='b', marker='o')
-    plt.ylim(0, 0.5)
+    plt.ylim(0, max(y_correlation)*1.1)
     
     # Label each point with the column name
     for i, txt in enumerate(column_names):
