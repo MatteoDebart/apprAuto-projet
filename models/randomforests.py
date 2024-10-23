@@ -12,7 +12,7 @@ from format_data import create_dataframe
 from preprocess import preprocess_supervised, OutputColumn
 from plots import plot_y_pred
 from models.evaluation import evaluation
-from train_model import split_target_from_dataset, save_model
+from utils import split_target_from_dataset, save_model
 
 
 def select_model(X, y):

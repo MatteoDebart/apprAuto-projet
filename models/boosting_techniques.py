@@ -8,10 +8,12 @@ from format_data import create_dataframe
 from preprocess import preprocess_supervised, OutputColumn
 from plots import plot_y_pred
 from models.evaluation import evaluation
+from utils import save_model, split_target_from_dataset
 
 
 class XGBoostConfig:
     """XGBoost model configuration."""
+
     def __init__(self):
         self.model_name = 'xgboost'
         self.model = XGBRegressor()
@@ -21,28 +23,18 @@ class XGBoostConfig:
             'model__eta': [0.01, 0.1, 0.2],
         }
 
+
 class LGBMConfig:
     """LightGBM model configuration."""
+
     def __init__(self):
         self.model_name = 'lgbm'
-        self.model = LGBMRegressor(silent=True) 
+        self.model = LGBMRegressor(silent=True)
         self.param_grid = {
             'model__n_estimators': [300, 400, 500, 600],
             'model__learning_rate': [0.01, 0.05, 0.1],
             'model__num_leaves': [15, 30, 50, 100]
         }
-        
-
-def split_target_from_dataset(Db, target='output'): 
-    y = Db[target]
-    X = Db.drop(columns=[target])
-    return X, y
-
-
-def save_model(model, model_name):
-    joblib_file = f"models/{model_name}.pkl"
-    joblib.dump(model, joblib_file)
-    print(f"Model saved as: {joblib_file}")
 
 
 def select_model(X_train, y_train, model_config):
@@ -51,17 +43,17 @@ def select_model(X_train, y_train, model_config):
     """
 
     pipeline = Pipeline([
-            ('scaler', StandardScaler()), 
-            ('model', model_config.model) 
-        ])
+        ('scaler', StandardScaler()),
+        ('model', model_config.model)
+    ])
 
     grid_search = GridSearchCV(
-                        estimator=pipeline, 
-                        param_grid=model_config.param_grid, 
-                        scoring='neg_mean_squared_error', 
-                        cv=5, 
-                        return_train_score=True
-                    )
+        estimator=pipeline,
+        param_grid=model_config.param_grid,
+        scoring='neg_mean_squared_error',
+        cv=5,
+        return_train_score=True
+    )
 
     grid_search.fit(X_train, y_train)
 
@@ -90,11 +82,9 @@ def complete_pipeline(X_train, X_test, y_train, y_test, model_config):
     save_model(best_model, model_config.model_name)
 
 
-
-
 if __name__ == "__main__":
 
-    data_file_path="welddb/welddb.data"
+    data_file_path = "welddb/welddb.data"
     target = OutputColumn.yield_strength
 
     print("[STEP 1] Loading the dataset..")
@@ -104,7 +94,8 @@ if __name__ == "__main__":
     X, y = split_target_from_dataset(Db)
 
     print("[STEP 3] Train/Test split..")
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=21)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=21)
 
     # XGBOOST
     print("[STEP 4] Model selection..")

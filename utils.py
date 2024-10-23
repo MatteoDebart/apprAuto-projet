@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from format_data import CATEGORICAL_COL, NUMERICAL_COL
-
+import joblib
 
 
 def plot_distribution(column):
@@ -41,21 +41,26 @@ def get_corr(table: pd.DataFrame):
 
     return col_info
 
-def get_numerical_features(Db:pd.DataFrame):
-    weld_columns = [col for col in Db.columns if col.startswith("Type of weld_")]
+
+def get_numerical_features(Db: pd.DataFrame):
+    weld_columns = [
+        col for col in Db.columns if col.startswith("Type of weld_")]
     numerical_features = list(set(Db.columns) - set(weld_columns) -
                               set(CATEGORICAL_COL) - set(["output"]))
     return numerical_features
 
-def get_categorical_features(Db:pd.DataFrame):
+
+def get_categorical_features(Db: pd.DataFrame):
     categorical_features = list(set(Db.columns) -
-                              set(NUMERICAL_COL) - set(["output"]))
+                                set(NUMERICAL_COL) - set(["output"]))
     return categorical_features
 
-def get_weld(Db:pd.DataFrame):
+
+def get_weld(Db: pd.DataFrame):
     # Identify columns that start with "Type of weld_"
-    weld_columns = [col for col in Db.columns if col.startswith("Type of weld_")]
-    
+    weld_columns = [
+        col for col in Db.columns if col.startswith("Type of weld_")]
+
     def extract_weld_type(row):
         # Iterate through the weld columns to find the type with value 1
         for weld in weld_columns:
@@ -65,3 +70,15 @@ def get_weld(Db:pd.DataFrame):
 
     # Apply the extract_weld_type function to each row in the DataFrame
     return Db.apply(extract_weld_type, axis=1)
+
+
+def split_target_from_dataset(Db, target='output'):  # Remove target col
+    y = Db[target]
+    X = Db.drop(columns=[target])
+    return X, y
+
+
+def save_model(model, model_name):
+    joblib_file = f"models/{model_name}.pkl"
+    joblib.dump(model, joblib_file)
+    print(f"Model saved as: {joblib_file}")

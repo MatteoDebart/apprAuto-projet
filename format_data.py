@@ -82,7 +82,6 @@ def create_dataframe(file_path: str = "welddb/welddb.data"):
 
     Db = Db.drop('Weld ID', axis=1)
     Db = Db.drop('Type of weld', axis=1)
-    #Db.to_csv("table.csv")
     return Db
 
 
@@ -90,4 +89,3 @@ if __name__ == '__main__':
 
     file_path = "welddb/welddb.data"
     create_dataframe(file_path)
-    
