@@ -3,11 +3,13 @@ from sklearn.linear_model import SGDRegressor
 from enum import Enum
 from preprocess import *
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from models.evaluation import *
 
 class Models(Enum):
     regressions = SGDRegressor()
     randomforest = RandomForestRegressor()
+    xgboost = XGBRegressor(n_estimators=700, max_depth=3, learning_rate=0.14, alpha=0.2)
 
     
 def preprocess_semisupervised(Db: pd.DataFrame, output_col: OutputColumn, model:Models, all_welds=False):

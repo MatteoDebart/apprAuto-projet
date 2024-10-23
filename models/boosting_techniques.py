@@ -3,7 +3,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
-import joblib
 from format_data import create_dataframe
 from preprocess import preprocess_supervised, OutputColumn
 from plots import plot_y_pred
@@ -11,27 +10,28 @@ from models.evaluation import evaluation
 from utils import save_model, split_target_from_dataset
 
 
-class XGBoostConfig:
+class XGBoostConfigSupervised:
     """XGBoost model configuration."""
 
     def __init__(self):
-        self.model_name = 'xgboost'
+        self.model_name = 'xgboost_supervised'
         self.model = XGBRegressor()
         self.param_grid = {
-            'model__n_estimators': [50, 100, 150, 200],
-            'model__max_depth': [3, 5, 7, 9],
-            'model__eta': [0.01, 0.1, 0.2],
+            'model__n_estimators': [600, 650, 700, 750, 800],
+            'model__max_depth': [3, 4, 5, 6],
+            'model__eta': [0.06, 0.08, 0.1, 0.12, 0.14],
+            'model__alpha': [0, 0.1, 0.2]
         }
 
 
-class LGBMConfig:
+class LGBMConfigSupervised:
     """LightGBM model configuration."""
 
     def __init__(self):
-        self.model_name = 'lgbm'
+        self.model_name = 'lgbm_supervised'
         self.model = LGBMRegressor(silent=True)
         self.param_grid = {
-            'model__n_estimators': [300, 400, 500, 600],
+            'model__n_estimators': [100, 300, 500, 600],
             'model__learning_rate': [0.01, 0.05, 0.1],
             'model__num_leaves': [15, 30, 50, 100]
         }
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     # XGBOOST
     print("[STEP 4] Model selection..")
-    xgboost_config = XGBoostConfig()
+    xgboost_config = XGBoostConfigSupervised()
     complete_pipeline(X_train, X_test, y_train, y_test, xgboost_config)
 
     # # LGBM
