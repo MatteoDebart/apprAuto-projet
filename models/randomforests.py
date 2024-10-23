@@ -29,7 +29,7 @@ def select_model(X, y):
 
     best_params = None
     best_oob_score = -1
-    n_iter_search = 100
+    n_iter_search = 1
     print(f"Trying {n_iter_search} combinations of parameters")
 
     for i in range(n_iter_search):
@@ -74,7 +74,7 @@ def complete_pipeline(X, y):
     plot_y_pred(y, best_model.oob_prediction_)
 
     print("Evaluation results:")
-    print(evaluation(best_model, X, y))
+    print(evaluation(best_model, X, y, use_oob=True))
 
     save_model(best_model, 'random_forest')
 
