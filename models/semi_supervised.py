@@ -11,7 +11,7 @@ class XGBoostConfigSemiSupervised:
     """XGBoost model configuration."""
 
     def __init__(self):
-        self.model_name = 'xgboost'
+        self.model_name = 'xgboost_semisupervised'
         self.model = XGBRegressor()
         self.param_grid = {
             'model__n_estimators': [100, 300, 500, 700, 900],

@@ -5,7 +5,7 @@ from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from format_data import create_dataframe
 from preprocess import preprocess_supervised, OutputColumn
-from plots import plot_y_pred
+from plots import plot_y_pred, plot_feature_importance
 from models.evaluation import evaluation
 from utils import save_model, split_target_from_dataset
 
@@ -78,6 +78,8 @@ def complete_pipeline(X_train, X_test, y_train, y_test, model_config):
 
     print("Evaluation results:")
     print(evaluation(best_model, X_test, y_test))
+
+    plot_feature_importance(best_model, X_train)
 
     save_model(best_model, model_config.model_name)
 
