@@ -6,18 +6,6 @@ from format_data import CATEGORICAL_COL, NUMERICAL_COL
 import joblib
 
 
-def plot_distribution(column):
-
-    plt.figure(figsize=(6, 4))
-
-    if pd.api.types.is_numeric_dtype(column):
-        sns.histplot(column, kde=True, bins=10)
-    else:
-        sns.countplot(x=column)
-
-    plt.ylabel('Frequency')
-    plt.show()
-
 
 def get_corr(table: pd.DataFrame):
     # Initialize the result dictionary
@@ -79,6 +67,6 @@ def split_target_from_dataset(Db, target='output'):  # Remove target col
 
 
 def save_model(model, model_name):
-    joblib_file = f"models/{model_name}.pkl"
+    joblib_file = f"models/pickels/{model_name}.pkl"
     joblib.dump(model, joblib_file)
     print(f"Model saved as: {joblib_file}")

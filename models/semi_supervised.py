@@ -3,7 +3,7 @@ from xgboost import XGBRegressor
 from models.boosting_techniques import complete_pipeline
 from format_data import create_dataframe
 from preprocess import OutputColumn
-from semisupervised import *
+from preprocess_semi import preprocess_semisupervised
 from utils import split_target_from_dataset
 
 
