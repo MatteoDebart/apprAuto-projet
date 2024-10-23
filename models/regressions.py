@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.pipeline import Pipeline
 import itertools
+from tqdm.auto import tqdm
 
 import sys, os
 
@@ -13,7 +14,7 @@ if __name__ == "__main__":
 
 from format_data import create_dataframe
 from preprocess import preprocess_supervised, OutputColumn
-from evaluation import cross_validation
+from models.evaluation import cross_validation
 
 def split_target_from_dataset(Db, target='output'):  # Remove target col
     y = Db[target]
@@ -56,7 +57,7 @@ def evaluate_regression(pipeline:Pipeline, param_grid:dict, X_train, X_test, y_t
     features_list = []
     best_scoring_list = []
 
-    while len(best_parameters_ids) < X_train.shape[1]:          #At each step, we will allow the subset to delete 1 element and add the best pair (allowing to add the deleted element if it is relevant)
+    for i in tqdm(range(1,X_train.shape[1])):                   #At each step, we will allow the subset to delete 1 element and add the best pair (allowing to add the deleted element if it is relevant)
         scoring_dict = {}
 
         for k in best_parameters_ids:
@@ -75,7 +76,6 @@ def evaluate_regression(pipeline:Pipeline, param_grid:dict, X_train, X_test, y_t
         best_parameters_ids = list(set(best_parameters_ids) - set([k])) +[i,j]
         features_list.append(best_parameters_ids)
         best_scoring_list.append(score)
-        print(len(best_parameters_ids), '/', X_train.shape[1])
 
     best_scoring_list = np.abs(np.array(best_scoring_list))
 
@@ -90,7 +90,7 @@ def evaluate_regression(pipeline:Pipeline, param_grid:dict, X_train, X_test, y_t
 
     optimal_features = features_list[best_score_id]
 
-    plt.plot(best_scoring_list)
+    plt.plot(list(range(1,X_train.shape[1]-2)), best_scoring_list[:-2])
     plt.xlabel("nb_features")
     plt.ylabel("Validation MSE")
     plt.show()
@@ -104,8 +104,6 @@ def evaluate_regression(pipeline:Pipeline, param_grid:dict, X_train, X_test, y_t
     grid_search = GridSearchCV(pipeline, {}, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
 
     grid_search.fit(X_train_temp, y_train)                      #Train the model on the best subset
-
-    test_score = grid_search.score(X_test_temp, y_test)
 
     y_pred = grid_search.predict(X_test_temp)
 
@@ -147,7 +145,7 @@ def evaluate_regression_no_plots(pipeline, param_grid, X_train, y_train):
     best_scoring_list = []
     features_list = []
 
-    while len(best_parameters_ids) < X_train.shape[1]:          #At each step, we will allow the subset to delete 1 element and add the best pair (allowing to add the deleted element if it is relevant)
+    for i in tqdm(range(1,X_train.shape[1])):                   #At each step, we will allow the subset to delete 1 element and add the best pair (allowing to add the deleted element if it is relevant)
         scoring_dict = {}
         for k in best_parameters_ids:
             scoring_dict[k] = {}
@@ -173,10 +171,6 @@ def evaluate_regression_no_plots(pipeline, param_grid, X_train, y_train):
             best_score_id = id
             best_score = best_scoring_list[id]
             
-    optimal_features = features_list[best_score_id]
-
-    print("Best features: ", optimal_features)
-
     return best_scoring_list[best_score_id]
 
 def seek_best_degree(n, X_train, y_train):
@@ -199,7 +193,7 @@ def seek_best_degree(n, X_train, y_train):
     min_score = np.inf
 
     for i in range(1,n+1):
-        pipeline_linreg = Pipeline([('preprocesser', PolynomialFeatures(i)),('model', SGDRegressor())])
+        pipeline_linreg = Pipeline([('preprocesser', PolynomialFeatures(i)),('model', SGDRegressor(max_iter=1700))])
         score = evaluate_regression_no_plots(pipeline_linreg, {}, X_train, y_train)
         list_scores.append(score)
         if score <= min_score:
@@ -214,24 +208,41 @@ def seek_best_degree(n, X_train, y_train):
 
     return best_degree
 
+def evaluate_linear_regression(X,y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=21)
+
+    pipeline_linreg = Pipeline([('model', SGDRegressor(max_iter=1700))])
+
+    print("Evaluate Linear Regression")
+    evaluate_regression(pipeline_linreg, {}, X_train, X_test, y_train, y_test, X.keys())
+
+
+def evaluate_polynomial_regression(X,y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=21)
+    
+    print("Search best degree")
+    degree = seek_best_degree(4, X_train, y_train)
+
+    pipeline_linreg = Pipeline([('preprocesser', PolynomialFeatures(degree)),('model', SGDRegressor(max_iter=1700))])
+
+    print("Evaluate Polynomial Regression with degree ", degree)
+    evaluate_regression(pipeline_linreg, {}, X_train, X_test, y_train, y_test, X.keys())
+
+
+
 if __name__ == "__main__":
     data_file_path="welddb/welddb.data"
     target = OutputColumn.yield_strength
 
     print("Loading the dataset")
     Db = create_dataframe(data_file_path)
+
     print("Preprocessing")
     Db = preprocess_supervised(Db, target)
 
     print("Split target from the dataset")
     X, y = split_target_from_dataset(Db)
 
-    print("Train/Test split")
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=21)
-    
-    degree = seek_best_degree(4, X_train, y_train)
-    
-    print("Creating Pipelines")
-    pipeline_linreg = Pipeline([('preprocesser', PolynomialFeatures(degree)),('model', SGDRegressor())])
+    evaluate_linear_regression(X, y)
 
-    evaluate_regression(pipeline_linreg, {}, X_train, X_test, y_train, y_test, Db.keys())
+    evaluate_polynomial_regression(X,y)
