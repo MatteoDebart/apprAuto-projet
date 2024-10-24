@@ -104,18 +104,18 @@ def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, all_welds=
     Db_copy = Db_copy.rename(columns={output_col.value: 'output'})
 
     # Outliers and scaling
-    Db_copy = handle_outliers(Db)
+    Db_copy = handle_outliers(Db_copy)
     scaler = StandardScaler()
-    scaled_feature = get_numerical_features(Db)+['output']
-    Db_copy[scaled_feature] = scaler.fit_transform(Db[scaled_feature])
+    scaled_feature = get_numerical_features(Db_copy)+['output']
+    Db_copy[scaled_feature] = scaler.fit_transform(Db_copy[scaled_feature])
 
     # we look at the correlation with the output and the columns with the least NaN values where the output is present
     reduced_Db = Db_copy.dropna(subset=['output'])
     print(
-        f"We retain only the rows with output values {output_col.value}, that is {100*len(reduced_Db)/len(Db):2f}% of the dataset")
+        f"We retain only the rows with output values {output_col.value}, that is {100*len(reduced_Db)/len(Db_copy):2f}% of the dataset")
 
     # We keep the rows this high correlation and completeness
-    features = list(set(Db.columns)-set(MECHANICAL_PROPERTIES))
+    features = list(set(Db_copy.columns)-set(MECHANICAL_PROPERTIES))
     col_info = get_corr(reduced_Db[features])
     features = feature_selection(col_info)
     if all_welds:
