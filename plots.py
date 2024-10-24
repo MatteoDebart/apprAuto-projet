@@ -118,3 +118,23 @@ def plot_y_pred(y, y_pred, weld_types=None):
     
     plt.grid(True)
     plt.show()
+
+
+def plot_feature_importance(best_model, X_train):
+        
+    if hasattr(best_model.named_steps['model'], 'feature_importances_'):
+        feature_importances = best_model.named_steps['model'].feature_importances_
+
+        feature_importance_df = pd.DataFrame({
+            'Feature': X_train.columns,
+            'Importance': feature_importances
+        }).sort_values(by='Importance', ascending=False)
+
+        plt.figure(figsize=(10, 6))
+        plt.barh(feature_importance_df['Feature'], feature_importance_df['Importance'])
+        plt.xlabel('Importance')
+        plt.title('Feature Importance')
+        plt.gca().invert_yaxis()  # to show the most important feature at the top
+        plt.show()
+    else:
+        print("The selected model does not support feature importance.")

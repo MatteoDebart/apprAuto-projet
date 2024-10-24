@@ -2,47 +2,23 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import sys
-import os
+import sys, os
+if __name__ == "__main__":
+    sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),".."))
+
+from format_data import MECHANICAL_PROPERTIES, COLUMNS, create_dataframe
+from utils import get_corr
+from preprocess import feature_selection, OutputColumn
 np.set_printoptions(threshold=sys.maxsize)
 
-def convert_less_than(value):
-    if isinstance(value, str) and value.startswith('<'):
-        try:
-            number = float(value[1:])
-            return np.random.uniform(0, number)
-        except ValueError:
-            return value
-    return value
-
-class Soudure():
+class MNAR_ANALYSIS():
     def __init__(self, file):
-        self.COLUMNS = ['Current / A',
-            'Heat input / kJmm-1',
-            'Post weld heat treatment temperature / °C',
-            'Niobium concentration / parts per million by weight',
-            'Molybdenum concentration / (weight%)',
-            'Type of weld_GMAA',
-            'Vanadium concentration / (weight%)',
-            'Type of weld_MMA',
-            'Type of weld_SA',
-            'Nitrogen concentration / parts per million by weight',
-            'Phosphorus concentration / (weight%)',
-            'Type of weld_SAA',
-            'Carbon concentration / (weight%)',
-            'Manganese concentration / (weight%)',
-            'Voltage / V',
-            'Chromium concentration / (weight%)',
-            'AC or DC',
-            'Type of weld_GTAA',
-            'Sulphur concentration / (weight%)']
-
-        self.create_dataframe(file)
+        self.create_df(file)
 
     def __len__(self):
         return len(self.Db)
     
-    def create_dataframe(self, file_path:str):
+    def create_df(self, file_path:str):
         '''
         This function Creates the early preprocessed Pandas Dataframe corresponding to the desiganted file.
         
@@ -53,19 +29,32 @@ class Soudure():
         '''
 
         if os.path.isfile(file_path):
-            self.Db = pd.read_excel(file_path, names=self.COLUMNS)
+            self.Db = create_dataframe(file_path)
+            self.Db = self.Db.rename(columns={OutputColumn.yield_strength.value: 'output'})
+            features = list(set(self.Db.columns)-set(MECHANICAL_PROPERTIES))
+            col_info = get_corr(self.Db[features])
+            features = feature_selection(col_info)
+            self.Db = self.Db[features]
+            self.COLUMNS = features
             self.MNAR_Analysis()
-            self.MAR_Analysis()
         
         else:
             raise ValueError("Path not found")
 
         
     def MNAR_Analysis(self):
+        '''
+        This function Analyses the correlation between the missingness of features. It creates a csv file containing the correlation matrix and plots the curve of
+        Number of correlated pairs VS treshold. We add a very low-amplitude Gaussian noise to the one-hot encoding to prevent nan values for the constant columns.
+        Since the noises are not correlated, this will likely not influence the Matrix in a significant way. 
+        '''
+
         self.Missing_mask = self.Db.isna().replace({False: 0, True: 1})
 
         corellation_matrix = np.abs(np.corrcoef(np.random.normal(np.array(self.Missing_mask), 1e-9), rowvar=False) - np.eye(len(self.COLUMNS),len(self.COLUMNS)))
-        np.savetxt("Correlation_matrix.csv", corellation_matrix, delimiter = ";")
+
+        corellation_df = pd.DataFrame(corellation_matrix, index = self.COLUMNS, columns=self.COLUMNS)
+        corellation_df.to_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "Correlation_matrix.csv"), ";")
 
         mask = np.array([[x>=y for y in range(len(self.COLUMNS))] for x in range(len(self.COLUMNS))])
         X = np.linspace(0,1,100)
@@ -79,41 +68,6 @@ class Soudure():
         plt.legend()
         plt.show()
 
-    def MAR_Analysis(self):
-        #self.Missing_mask = self.Db.isna().replace({False: 0, True: 1})
-        self.Missing_mask = self.Db.isna()
-        for i in self.COLUMNS:
-            for j in self.COLUMNS:
-                fig, axs = plt.subplots(3, 1, sharex=True)
-                fig.suptitle(i)
-
-                vector = np.array(self.Db[j])
-                vector = vector[~np.isnan(vector)]      #Remove the NaN values
-                _ , bins = np.histogram(vector, 100)
-                axs[0].hist(vector, bins=bins, density = True, label = "With Missing Values")
-                axs[0].legend()
-
-                vector2 = np.array(self.Db[j].where(~self.Missing_mask[i]))
-                vector2 = vector2[~np.isnan(vector2)]      #Remove the NaN values
-                vector3 = np.array(self.Db[j].where(self.Missing_mask[i]))
-                vector3 = vector3[~np.isnan(vector3)]      #Remove the NaN values
-
-                if np.sum(np.abs(vector2)) != 0 and vector2.shape[0] <= 0.8*vector.shape[0]:
-                    print(vector.shape)
-                    print(vector2.shape)
-                    print(vector3.shape)
-                    axs[1].hist(vector2,bins=bins, density = True, label = "Without Missing Values")
-                    axs[1].legend()
-                    axs[2].hist(vector3, bins=bins, density = True, label = "Missing Values Distribution")
-                    axs[2].legend()
-                    plt.xlabel(j)
-                    plt.legend()
-                    plt.show()
-
-                else:
-                    print(i, j)
-                    plt.close(fig)
-
 
 if __name__ == "__main__":
-    S = Soudure("relvant_features.xlsx")
+    S = MNAR_ANALYSIS("welddb/welddb.data")
