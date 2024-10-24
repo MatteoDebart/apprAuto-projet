@@ -6,6 +6,10 @@ from sklearn.model_selection import KFold
 
 
 def cross_validation(model, X, y, k=5):
+    '''
+    Execute a cross validation process on the input data (X,y) (default is 5 folds)
+    Returns the mean MSE, mean R², mean Bias and variance
+    '''
     # Initialize lists to store the results
     mse_scores = []
     r2_scores = []
@@ -52,6 +56,10 @@ def cross_validation(model, X, y, k=5):
 
 
 def evaluation(model, X_test, y_test, use_oob=False):
+    '''
+    Returns the MSE, R², Bias and Variance for our model.
+    use_oob=True can be used for Random forest models to print the out-of-bag errpr
+    '''
     if use_oob:
         y_pred = model.oob_prediction_
     else:

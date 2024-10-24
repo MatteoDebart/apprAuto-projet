@@ -6,7 +6,6 @@ from format_data import CATEGORICAL_COL, NUMERICAL_COL
 import joblib
 
 
-
 def get_corr(table: pd.DataFrame):
     # Initialize the result dictionary
     col_info = {
