@@ -5,3 +5,5 @@ seaborn==0.13.2
 feature-engine==1.8.1
 scikit-learn==1.5.2
 miceforest==6.0.3
+xgboost==2.1.2
+tqdm==4.66.5

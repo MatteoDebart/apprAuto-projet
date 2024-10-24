@@ -100,16 +100,17 @@ def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, all_welds=
     '''
     Preprocess the dataset: Handle outliers, impute the features, and select those which will be in the final dataset
     '''
-    Db = Db.rename(columns={output_col.value: 'output'})
+    Db_copy = Db.copy()
+    Db_copy = Db_copy.rename(columns={output_col.value: 'output'})
 
     # Outliers and scaling
-    Db = handle_outliers(Db)
+    Db_copy = handle_outliers(Db)
     scaler = StandardScaler()
     scaled_feature = get_numerical_features(Db)+['output']
-    Db[scaled_feature] = scaler.fit_transform(Db[scaled_feature])
+    Db_copy[scaled_feature] = scaler.fit_transform(Db[scaled_feature])
 
     # we look at the correlation with the output and the columns with the least NaN values where the output is present
-    reduced_Db = Db.dropna(subset=['output'])
+    reduced_Db = Db_copy.dropna(subset=['output'])
     print(
         f"We retain only the rows with output values {output_col.value}, that is {100*len(reduced_Db)/len(Db):2f}% of the dataset")
 
@@ -119,22 +120,22 @@ def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, all_welds=
     features = feature_selection(col_info)
     if all_welds:
         weld_columns = [
-            col for col in Db.columns if col.startswith("Type of weld_")]
+            col for col in Db_copy.columns if col.startswith("Type of weld_")]
         for col in weld_columns:
             if col not in features:
                 features.append(col)
 
     # We do the imputation with as many rows as possible
-    imputed_Db = imputation(Db)
+    imputed_Db = imputation(Db_copy)
     imputed_Db[scaled_feature] = scaler.inverse_transform(
         imputed_Db[scaled_feature])
 
     # But for the supervised approach we only keep the rows with an output
-    Db = imputed_Db.dropna(subset=['output'])[features]
+    Db_copy = imputed_Db.dropna(subset=['output'])[features]
 
-    return Db
+    return Db_copy
 
 
 if __name__ == "__main__":
-    db = create_dataframe()
-    processed_db = preprocess_supervised(db, OutputColumn.yield_strength)
+    Db = create_dataframe()
+    processed_db = preprocess_supervised(Db, OutputColumn.yield_strength)
