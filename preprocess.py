@@ -19,6 +19,9 @@ class OutputColumn(Enum):
 
 
 def feature_decision(completeness):
+    '''
+    Creates a function of the completeness. Features with features(completeness)>correlation won't be selected
+    '''
     points = np.array([(0, 0.45), (0.4, 0.22778), (0.6, 0.05)])
     x_points = points[:, 0]
     y_points = points[:, 1]
@@ -28,6 +31,9 @@ def feature_decision(completeness):
 
 
 def feature_selection(col_info, feature_decision=feature_decision):
+    '''
+    Select the features with correlation and completeness high enough
+    '''
     features = ['output']
     # Loop through the columns in col_info
     for col, info in col_info.items():
@@ -69,6 +75,9 @@ def handle_outliers(Db: pd.DataFrame, iqr_features: list[str] = ["Manganese conc
 
 
 def imputation(Db: pd.DataFrame, numerical=True, categorical=True):
+    '''
+    Imputes the missing values in the dataset. The process is different for numerical and categorical columns.
+    '''
     # numerical columns
     if numerical:
         num_columns = get_numerical_features(Db)
@@ -88,11 +97,14 @@ def imputation(Db: pd.DataFrame, numerical=True, categorical=True):
 
 
 def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, all_welds=False):
+    '''
+    Preprocess the dataset: Handle outliers, impute the features, and select those which will be in the final dataset
+    '''
     Db_copy = Db.copy()
     Db_copy = Db_copy.rename(columns={output_col.value: 'output'})
 
     # Outliers and scaling
-    Db_copy=handle_outliers(Db)
+    Db_copy = handle_outliers(Db)
     scaler = StandardScaler()
     scaled_feature = get_numerical_features(Db)+['output']
     Db_copy[scaled_feature] = scaler.fit_transform(Db[scaled_feature])
@@ -107,19 +119,19 @@ def preprocess_supervised(Db: pd.DataFrame, output_col: OutputColumn, all_welds=
     col_info = get_corr(reduced_Db[features])
     features = feature_selection(col_info)
     if all_welds:
-        weld_columns = [col for col in Db_copy.columns if col.startswith("Type of weld_")]
+        weld_columns = [
+            col for col in Db_copy.columns if col.startswith("Type of weld_")]
         for col in weld_columns:
             if col not in features:
                 features.append(col)
-    
 
-    # We do the imputation with as many rows as possible 
+    # We do the imputation with as many rows as possible
     imputed_Db = imputation(Db_copy)
-    imputed_Db[scaled_feature] = scaler.inverse_transform(imputed_Db[scaled_feature])
+    imputed_Db[scaled_feature] = scaler.inverse_transform(
+        imputed_Db[scaled_feature])
 
     # But for the supervised approach we only keep the rows with an output
     Db_copy = imputed_Db.dropna(subset=['output'])[features]
-    
 
     return Db_copy
 

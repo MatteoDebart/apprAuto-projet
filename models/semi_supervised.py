@@ -3,7 +3,7 @@ from xgboost import XGBRegressor
 from models.boosting_techniques import complete_pipeline
 from format_data import create_dataframe
 from preprocess import OutputColumn
-from preprocess_semi import preprocess_semisupervised
+from preprocess_semi import preprocess_semisupervised, Models
 from utils import split_target_from_dataset
 
 
@@ -30,9 +30,9 @@ if __name__ == "__main__":
     Db_complete = create_dataframe(data_file_path)
 
     print("[STEP 2] Preprocessing and Pseudo-labeling..")
-    Db_complete = preprocess_semisupervised(Db_complete, target, model=Models.xgboost)
+    Db_complete = preprocess_semisupervised(
+        Db_complete, target, model=Models.xgboost)
     X, y = split_target_from_dataset(Db_complete)
-
 
     print("[STEP 3] Train/Test split..")
     X_train, X_test, y_train, y_test = train_test_split(
@@ -42,4 +42,3 @@ if __name__ == "__main__":
     print("[STEP 4] Model selection..")
     xgboost_config = XGBoostConfigSemiSupervised()
     complete_pipeline(X_train, X_test, y_train, y_test, xgboost_config)
-

@@ -63,6 +63,9 @@ def convert_less_than(value):
 
 
 def create_dataframe(file_path: str = "welddb/welddb.data"):
+    '''
+    Create the dataframe and process a few of them
+    '''
     Db = pd.read_csv(file_path, delimiter="\s+", names=COLUMNS, na_values='N')
     Db[NUMERICAL_COL] = Db[NUMERICAL_COL].map(convert_less_than)
     Db[NUMERICAL_COL] = Db[NUMERICAL_COL].apply(pd.to_numeric, errors='coerce')

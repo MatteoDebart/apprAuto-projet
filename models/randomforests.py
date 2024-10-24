@@ -29,11 +29,9 @@ def select_model(X, y):
 
     best_params = None
     best_oob_score = -1
-    n_iter_search = 1
-    print(f"Trying {n_iter_search} combinations of parameters")
+    n_iter_search = 100
 
     for i in range(n_iter_search):
-
         params = {key: np.random.choice(values)
                   for key, values in param_grid.items()}
         model = RandomForestRegressor(
@@ -77,6 +75,8 @@ def complete_pipeline(X, y):
     print(evaluation(best_model, X, y, use_oob=True))
 
     save_model(best_model, 'random_forest')
+
+    return best_model
 
 
 if __name__ == "__main__":
