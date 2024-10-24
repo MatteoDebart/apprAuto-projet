@@ -5,17 +5,22 @@ from sklearn.decomposition import PCA
 from preprocess import *
 import itertools
 
-def preprocess_PCA(Db:pd.DataFrame):
+def preprocess_PCA(Db:pd.DataFrame, missing_threshold=0.5):
+    Db_copy = Db.copy()
+    # get rid of columns with over 50% missing data
+    missing_ratios = Db_copy.isnull().mean()
+    cols_to_drop = missing_ratios[missing_ratios > missing_threshold].index
+    Db_copy = Db_copy.drop(columns=cols_to_drop)
     # Outliers and scaling
-    Db=handle_outliers(Db)
+    Db_copy=handle_outliers(Db_copy)
     scaler = StandardScaler()
-    scaled_feature = get_numerical_features(Db)
-    Db[scaled_feature] = scaler.fit_transform(Db[scaled_feature])
+    scaled_feature = get_numerical_features(Db_copy)
+    Db_copy[scaled_feature] = scaler.fit_transform(Db_copy[scaled_feature])
 
-    Db = imputation(Db, categorical=False)
-    features = list(set(get_numerical_features(Db))-set(MECHANICAL_PROPERTIES))
-    Db = Db[features]
-    return Db
+    Db_copy = imputation(Db_copy, categorical=False)
+    features = list(set(get_numerical_features(Db_copy))-set(MECHANICAL_PROPERTIES))
+    Db_copy = Db_copy[features]
+    return Db_copy
 
 def run_PCA(Db:pd.DataFrame):
     pca = PCA(n_components=len(Db.columns))
@@ -89,7 +94,7 @@ def plot_pca_distribution(principal_components, ax, component_x:int, component_y
         ax.set_zlabel(f"PC{component_z}")
         ax.set_title(f"PCA Distribution (PC{component_x}, PC{component_y}, PC{component_z})")
 
-def plot_correlation_circle(pca:PCA, columns, ax, component_x, component_y, threshold=0.05):
+def plot_correlation_circle(pca:PCA, columns, ax, component_x, component_y, threshold=0.05, highlight_col=[]):
     '''
     Plots the PCA correlation circle for two principal components.
     
@@ -114,8 +119,10 @@ def plot_correlation_circle(pca:PCA, columns, ax, component_x, component_y, thre
     # Plot each feature as a vector
     for i, feature in enumerate(columns):
         var = loadings[0, i]**2 + loadings[1, i]**2
-        if var<threshold:
+        if var<threshold**2:
             continue
+        if feature in highlight_col:
+            print(feature)
         ax.arrow(0, 0, loadings[0, i], loadings[1, i], 
                  color='b', alpha=0.5, head_width=0.05, head_length=0.05)
         ax.text(loadings[0, i] * 1.1, loadings[1, i] * 1.1, feature, 
@@ -131,7 +138,7 @@ def plot_correlation_circle(pca:PCA, columns, ax, component_x, component_y, thre
     ax.grid(True)
 
 
-def plot_PCA(pca: PCA, principal_components, nb_relevant_features: int, columns: list[str]):
+def plot_PCA(pca: PCA, principal_components, nb_relevant_features: int, columns: list[str], highlight_col=[], threshold=0.05):
     '''
     For each pair of principal components under the top nb_relevant_features,
     this function plots the PCA distribution and PCA correlation circle side by side.
@@ -157,7 +164,7 @@ def plot_PCA(pca: PCA, principal_components, nb_relevant_features: int, columns:
         plot_pca_distribution(principal_components, ax1, component_x=i, component_y=j, component_z=None)
         
         # Plot the PCA correlation circle for the current pair of components (i, j)
-        plot_correlation_circle(pca, columns, ax2, component_x=i, component_y=j)
+        plot_correlation_circle(pca, columns, ax2, component_x=i, component_y=j, highlight_col=highlight_col, threshold=threshold)
         
         # Adjust the layout to avoid overlapping labels
         plt.tight_layout()

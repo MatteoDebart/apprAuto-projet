@@ -6,27 +6,42 @@ from preprocess import feature_decision, OutputColumn
 from utils import get_corr
 from format_data import MECHANICAL_PROPERTIES
 
-def column_info(col_title, table):
+
+def column_info(col_title, table, center_pct=95):
     col = table[col_title]
     missing_ratio = col.isnull().mean()
-    
+
     # Plot the distribution
     plt.figure(figsize=(10, 6))
-    if pd.api.types.is_numeric_dtype(col):
-        sns.histplot(col.dropna(), kde=True)
-    else: # the variable is categorical
-        sns.countplot(y=col, order=col.value_counts().index)
     
-    plt.title(f"{col_title}: {missing_ratio:.2f}% missing")
+    if pd.api.types.is_numeric_dtype(col):
+        # Calculate the bounds based on the center percentage (e.g., 95% or 90%)
+        lower_bound = (100 - center_pct) / 2 / 100  # e.g., for 95%, lower_bound is 2.5%
+        upper_bound = 1 - lower_bound  # e.g., for 95%, upper_bound is 97.5%
+        
+        # Remove the outliers based on the bounds
+        lower_quantile = col.quantile(lower_bound)
+        upper_quantile = col.quantile(upper_bound)
+        filtered_col = col[(col >= lower_quantile) & (col <= upper_quantile)]
+        
+        # Plot the filtered data
+        sns.histplot(filtered_col.dropna(), kde=True)
+        
+    else:  # the variable is categorical
+        sns.countplot(y=col, order=col.value_counts().index)
+
+    plt.title(f"{col_title}: {missing_ratio:.2%} missing")
     plt.xlabel(col_title)
     
     plt.show()
 
 
-def plot_completeness_vs_corr(Db, output_column:OutputColumn, feature_decision=feature_decision):
-    Db = Db.rename(columns={output_column.value: 'output'})
-    features = list(set(Db.columns)-set(MECHANICAL_PROPERTIES))
-    col_info = get_corr(Db[features])
+def plot_completeness_vs_corr(Db:pd.DataFrame, output_column:OutputColumn, feature_decision=feature_decision):
+    Db_copy = Db.copy()
+    Db_copy = Db_copy.rename(columns={output_column.value: 'output'})
+    Db_copy = Db_copy.dropna(subset=['output'])
+    features = list(set(Db_copy.columns)-set(MECHANICAL_PROPERTIES))
+    col_info = get_corr(Db_copy[features])
 
     # Initialize lists to store x (completeness) and y (correlation) values
     x_completeness = []
@@ -55,7 +70,7 @@ def plot_completeness_vs_corr(Db, output_column:OutputColumn, feature_decision=f
     
     # Label each point with the column name
     for i, txt in enumerate(column_names):
-        plt.annotate(txt, (x_completeness[i], y_correlation[i]), fontsize=12, ha='right')
+        plt.annotate(txt, (x_completeness[i], y_correlation[i]), fontsize=20, ha='right')
 
     if feature_decision is not None:
         comp = np.linspace(min(x_completeness), max(x_completeness), 100)
@@ -63,8 +78,8 @@ def plot_completeness_vs_corr(Db, output_column:OutputColumn, feature_decision=f
         plt.plot(comp, corr, '-r')
 
     # Labels and title (in French)
-    plt.xlabel("Complétude de la colonne", fontsize=12)
-    plt.ylabel("Corrélation avec l'output en valeur absolue", fontsize=12)
+    plt.xlabel("Complétude de la colonne", fontsize=20)
+    plt.ylabel("Corrélation avec l'output en valeur absolue", fontsize=20)
     plt.title("Complétude vs Corrélation", fontsize=14)
 
     # Show grid
