@@ -3,11 +3,13 @@ from sklearn.linear_model import SGDRegressor
 from enum import Enum
 from preprocess import *
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from models.evaluation import *
 
 class Models(Enum):
     regressions = SGDRegressor()
     randomforest = RandomForestRegressor()
+    xgboost = XGBRegressor(n_estimators=700, max_depth=3, learning_rate=0.14, alpha=0.2)
 
     
 def preprocess_semisupervised(Db: pd.DataFrame, output_col: OutputColumn, model:Models, all_welds=False):
@@ -53,16 +55,16 @@ def preprocess_semisupervised(Db: pd.DataFrame, output_col: OutputColumn, model:
 
     return Db_complete
 
-def evaluation_semi(Db, output_col:OutputColumn, model:Models):
-    Db_complete = preprocess_semisupervised(Db, output_col, model)
+# def evaluation_semi(Db, output_col:OutputColumn, model:Models):
+#     Db_complete = preprocess_semisupervised(Db, output_col, model)
 
-    y_complete = Db_complete['output']
-    X_complete = Db_complete.drop(['output'], axis=1)
+#     y_complete = Db_complete['output']
+#     X_complete = Db_complete.drop(['output'], axis=1)
 
     
-    X_train, X_test, y_train, y_test = train_test_split(X_complete, y_complete, test_size=0.2, random_state=42)
+#     X_train, X_test, y_train, y_test = train_test_split(X_complete, y_complete, test_size=0.2, random_state=42)
     
-    model_instance = model.value  # Extract the model from the Enum
-    model_instance.fit(X_train, y_train)
+#     model_instance = model.value  # Extract the model from the Enum
+#     model_instance.fit(X_train, y_train)
 
-    return evaluation(model_instance, X_test, y_test)
+#     return evaluation(model_instance, X_test, y_test)
